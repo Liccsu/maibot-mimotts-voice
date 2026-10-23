@@ -59,6 +59,37 @@ SPEED_PHRASES: dict[str, str] = {
 
 SING_STYLE_PREFIX = "用自然流畅的歌声演唱这段歌词，旋律连贯、节奏稳定、咬字清晰，不要像朗读。"
 
+# 唱歌专用：情绪落在「演唱表现」上，不能沿用说话那套「语气XX」
+# 且只在调用方显式指定情绪时才使用，不继承 style.default_emotion
+SING_EMOTION_PHRASES: dict[str, str] = {
+    "开心": "唱得轻快明亮，句尾带笑意",
+    "兴奋": "唱得热烈有推进感，但气息和音准要稳住",
+    "温柔": "唱得柔和松弛，气息连绵不断",
+    "安慰": "唱得轻缓温和，像在耳边低声安抚",
+    "悲伤": "唱得低沉克制，尾音带一点叹息",
+    "委屈": "唱得轻而发颤，情绪收着不外放",
+    "愤怒": "唱得有力，咬字扎实，情绪层层递进",
+    "冷淡": "唱得平直克制，几乎不带起伏",
+    "严肃": "唱得沉稳端正，节奏规整",
+    "俏皮": "唱得轻巧跳脱，节奏带点弹性",
+    "撒娇": "唱得软糯一点，尾音轻轻上扬",
+    "慵懒": "唱得松垮放缓，气息松散",
+    "惊讶": "唱出突然的起伏，但不要破音",
+    "无奈": "唱得带点叹息，尾音缓缓下坠",
+    "害羞": "唱得轻而含蓄，音量收着",
+    "深情": "唱得低柔绵长，气息贴近",
+}
+
+# 唱歌的「快慢」是节奏，不是语速，措辞要换
+SING_SPEED_PHRASES: dict[str, str] = {
+    "slow": "节奏放缓，气息拉长，不要赶拍",
+    "normal": "",
+    "fast": "节奏明快，但每个字都要唱清楚，不要含混",
+}
+
+# 唱歌未指定情绪时的默认基调：把控制权交回歌词
+SING_NEUTRAL_HINT = "情绪随歌词本身自然表达，不要刻意夸张或用力过猛"
+
 SEND_METHODS = ("auto", "record", "voice", "hybrid")
 VOICE_MODES = ("preset", "clone", "design")
 
@@ -106,10 +137,12 @@ class VoiceSectionConfig(PluginConfigBase):
 class StyleSectionConfig(PluginConfigBase):
     __ui_label__ = "风格"
     default_emotion: str = Field(
-        default="", description="默认情绪（如 温柔/俏皮），留空则不加情绪描述"
+        default="",
+        description="默认情绪（如 温柔/俏皮），留空则不加情绪描述。仅作用于「说话」，唱歌不继承",
     )
     default_speed: str = Field(
-        default="normal", description="默认语速：slow / normal / fast"
+        default="normal",
+        description="默认语速：slow / normal / fast。仅作用于「说话」，唱歌时忽略",
     )
     extra_instruction: str = Field(
         default="",
@@ -354,24 +387,33 @@ class AIVoicePlugin(MaiBotPlugin):
 
     def _compose_style(self, base: str, emotion: str, speed: str, kind: str) -> str:
         cfg = self.config.style
+        singing = kind == "sing"
         parts: list[str] = []
 
-        if kind == "sing":
+        if singing:
             parts.append(SING_STYLE_PREFIX)
 
         if base.strip():
             parts.append(base.strip())
 
+        # 唱歌不继承全局默认情绪/语速。歌唱的情绪应由歌词决定，
+        # 只有调用方显式指定时才叠加，否则唱什么都一个味儿。
         emo_key = (emotion or "").strip()
         if emo_key.lower() in ("", "auto", "默认"):
-            emo_key = cfg.default_emotion.strip()
+            emo_key = "" if singing else cfg.default_emotion.strip()
+
         if emo_key:
-            parts.append(EMOTION_PHRASES.get(emo_key, f"语气{emo_key}"))
+            if singing:
+                parts.append(SING_EMOTION_PHRASES.get(emo_key, f"演唱情绪偏{emo_key}，但以歌词表达为主"))
+            else:
+                parts.append(EMOTION_PHRASES.get(emo_key, f"语气{emo_key}"))
+        elif singing:
+            parts.append(SING_NEUTRAL_HINT)
 
         speed_key = (speed or "").strip().lower()
         if speed_key in ("", "auto", "默认"):
-            speed_key = cfg.default_speed.strip().lower()
-        phrase = SPEED_PHRASES.get(speed_key, "")
+            speed_key = "" if singing else cfg.default_speed.strip().lower()
+        phrase = (SING_SPEED_PHRASES if singing else SPEED_PHRASES).get(speed_key, "")
         if phrase:
             parts.append(phrase)
 

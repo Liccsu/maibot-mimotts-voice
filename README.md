@@ -132,9 +132,9 @@ send_method = "auto"
 | `voices_dir` | 音色样本目录，支持相对/绝对路径 | `voices` |
 | `fallback_to_preset` | 复刻音色不可用时是否回退到预置音色 | `true` |
 | `audio_format` | 返回音频格式，`wav` 兼容性最好，`mp3` 更小 | `wav` |
-| `default_emotion` | 默认情绪，留空不注入 | - |
-| `default_speed` | 默认语速 `slow` / `normal` / `fast` | `normal` |
-| `extra_instruction` | 追加到每条语音指令末尾的补充要求 | - |
+| `default_emotion` | 默认情绪，留空不注入。**仅作用于说话，唱歌不继承** | - |
+| `default_speed` | 默认语速 `slow` / `normal` / `fast`。**仅作用于说话，唱歌时忽略** | `normal` |
+| `extra_instruction` | 追加到每条语音指令末尾的补充要求（说话与唱歌都会加） | - |
 | `max_chars` | 单段朗读字数上限，超出分段发送 | `180` |
 | `sing_max_chars` | 单段演唱字数上限（过长破坏旋律） | `400` |
 | `clean_text` | 合成前清洗 Markdown/emoji/URL | `true` |
@@ -260,6 +260,13 @@ maibot-mimotts-voice/
 ```
 
 ## 更新日志
+
+### v2.0.2
+
+- 🎵 **修复唱歌被全局默认情绪污染**：此前 `kind=sing` 也会套用 `style.default_emotion`，导致配置了「兴奋」后唱什么歌都变成「语气兴奋激动、音量和音高都有起伏」。现在唱歌**不再继承** `default_emotion` / `default_speed`，情绪交回歌词本身（默认注入「情绪随歌词自然表达，不要夸张」）
+- 🎤 **唱歌情绪改用演唱措辞**：显式传 `emotion` 时使用独立的 `SING_EMOTION_PHRASES`（如「唱得柔和松弛，气息连绵不断」），不再用「语气XX」这种说话的说法
+- 🥁 **唱歌速度改称节奏**：`speed=slow/fast` 在唱歌时翻译为「节奏放缓，气息拉长」「节奏明快，但每个字都要唱清楚」，避免被理解成加速朗读
+- 🔧 风格拼接顺序固定为：唱歌基调 → 自由风格 → 情绪 → 速度 → 附加后缀
 
 ### v2.0.1
 

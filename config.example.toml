@@ -29,10 +29,13 @@ audio_format = "wav"
 
 [style]
 # 默认情绪，留空表示不加情绪描述；可选：温柔/俏皮/慵懒/冷淡 ...
+# 仅作用于「说话」，唱歌不会继承这一项（歌唱情绪由歌词决定）
 default_emotion = ""
 # 默认语速：slow / normal / fast
+# 同样仅作用于「说话」，唱歌时这条会被忽略
 default_speed = "normal"
 # 追加到每次语音指令末尾，例如：像真人聊天，不要播音腔，允许自然的停顿和呼吸
+# 说话和唱歌都会追加，唱歌时别写「语速XX」这类措辞
 extra_instruction = ""
 
 [speech]

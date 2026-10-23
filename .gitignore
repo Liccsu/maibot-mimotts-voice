@@ -16,3 +16,6 @@ Thumbs.db
 
 # 工作区本地数据
 .workbuddy/
+
+# 构建产物
+dist/
