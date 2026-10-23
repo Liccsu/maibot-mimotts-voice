@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "id": "liccsu.maibot-mimotts-voice",
   "name": "MiMo TTS Voice Clone",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "MiMo TTS 语音插件 for MaiBot - 支持预置音色、音色复刻、文本设计音色，修复唱歌与语气/语速/情感控制（fork 维护版）",
   "author": {
     "name": "Liccsu",
@@ -14,22 +14,20 @@
     "homepage": "https://github.com/Liccsu/maibot-mimotts-voice",
     "issues": "https://github.com/Liccsu/maibot-mimotts-voice/issues"
   },
+  "plugin_type": "provider",
   "host_application": {
     "min_version": "1.0.0",
-    "max_version": "999.999.999"
+    "max_version": "1.99.99"
   },
   "sdk": {
     "min_version": "1.0.0",
-    "max_version": "999.999.999"
+    "max_version": "2.99.99"
   },
   "dependencies": [],
   "capabilities": [
-    "send.text",
     "send.custom",
     "send.hybrid",
-    "send.record",
-    "message.get_by_id",
-    "chat.get_all_streams"
+    "message.get_by_id"
   ],
   "i18n": {
     "default_locale": "zh-CN",

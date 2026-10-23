@@ -450,28 +450,11 @@ class AIVoicePlugin(MaiBotPlugin):
             except Exception as exc:  # noqa: BLE001
                 self.ctx.logger.debug("message.get_by_id 失败: %s", exc)
 
-        chat_proxy = getattr(self.ctx, "chat", None)
-        lister = getattr(chat_proxy, "get_group_streams", None) if chat_proxy is not None else None
-        if not callable(lister):
-            return ""
-        try:
-            streams = await lister()
-            if streams:
-                def _recent(item: Any) -> float:
-                    if isinstance(item, dict):
-                        for key in ("last_active_time", "last_message_time", "update_time"):
-                            if isinstance(item.get(key), (int, float)):
-                                return float(item[key])
-                    return 0.0
-
-                best = max(streams, key=_recent)
-                sid = best.get("stream_id") if isinstance(best, dict) else ""
-                if sid:
-                    self.ctx.logger.warning("未能定位消息所属聊天流，回退到最近活跃的群聊: %s", sid)
-                    return str(sid)
-        except Exception as exc:  # noqa: BLE001
-            self.ctx.logger.warning("chat.get_group_streams 失败: %s", exc)
-
+        # 不再回退到「最近活跃的群聊」：多群场景下会把语音发进错误的群。
+        # 定位不到就返回空，由调用方提示 AI 改用文字回复。
+        self.ctx.logger.warning(
+            "未能定位消息所属聊天流（msg_id=%s），将改用文字回复", msg_id or "(none)"
+        )
         return ""
 
     # -- 发送 -------------------------------------------------------------

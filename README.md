@@ -261,6 +261,15 @@ maibot-mimotts-voice/
 
 ## 更新日志
 
+### v2.0.3
+
+官方插件中心评审后的修正：
+
+- 🔐 **能力声明与实现对齐**：删掉不存在的 `send.record` 和从未使用的 `send.text`，`chat.get_all_streams` 一并移除。现在只声明实际调用的三项——`send.custom`、`send.hybrid`、`message.get_by_id`。此前声明与调用不符，Host 会按名逐项授权，一旦走到兜底路径会被拒，表现为语音发不出去
+- 🛑 **移除「最近活跃群聊」兜底**：定位不到 `stream_id` 时不再猜一个群发出去，改为记 warning 并让 AI 改用文字回复。多群部署下这条兜底会把语音发进错误的群
+- 🏷️ 显式声明 `plugin_type = "provider"`
+- 📅 `host_application` 上界改为 `1.99.99`、`sdk` 上界改为 `2.99.99`（此前写 `999.999.999` 属占位值，无实际验证依据）
+
 ### v2.0.2
 
 - 🎵 **修复唱歌被全局默认情绪污染**：此前 `kind=sing` 也会套用 `style.default_emotion`，导致配置了「兴奋」后唱什么歌都变成「语气兴奋激动、音量和音高都有起伏」。现在唱歌**不再继承** `default_emotion` / `default_speed`，情绪交回歌词本身（默认注入「情绪随歌词自然表达，不要夸张」）
