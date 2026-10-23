@@ -1,17 +1,18 @@
 {
   "manifest_version": 2,
-  "id": "Emilia-awa.maibot-mimotts-voice",
+  "id": "liccsu.maibot-mimotts-voice",
   "name": "MiMo TTS Voice Clone",
-  "version": "1.6.0",
-  "description": "MiMo TTS Voice Clone Plugin for MaiBot - AI语音回复插件，支持自定义音色克隆和风格控制",
+  "version": "2.0.1",
+  "description": "MiMo TTS 语音插件 for MaiBot - 支持预置音色、音色复刻、文本设计音色，修复唱歌与语气/语速/情感控制（fork 维护版）",
   "author": {
-    "name": "Emilia-awa",
-    "url": "https://github.com/Emilia-awa"
+    "name": "Liccsu",
+    "url": "https://github.com/Liccsu"
   },
   "license": "MIT",
   "urls": {
-    "repository": "https://github.com/Emilia-awa/maibot-mimotts-voice",
-    "homepage": "https://github.com/Emilia-awa/maibot-mimotts-voice"
+    "repository": "https://github.com/Liccsu/maibot-mimotts-voice",
+    "homepage": "https://github.com/Liccsu/maibot-mimotts-voice",
+    "issues": "https://github.com/Liccsu/maibot-mimotts-voice/issues"
   },
   "host_application": {
     "min_version": "1.0.0",
@@ -25,6 +26,7 @@
   "capabilities": [
     "send.text",
     "send.custom",
+    "send.hybrid",
     "send.record",
     "message.get_by_id",
     "chat.get_all_streams"

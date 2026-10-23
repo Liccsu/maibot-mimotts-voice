@@ -1,12 +1,49 @@
 [plugin]
 enabled = true
-config_version = "1.0.0"
+config_version = "2.0.0"
 
 [voice]
+# MiMo API Key：https://platform.xiaomimimo.com
 mimo_api_key = ""
+# Plan 用户用 https://token-plan-cn.xiaomimimo.com/v1
+# 按量计费用 https://api.xiaomimimo.com/v1
 api_base_url = "https://token-plan-cn.xiaomimimo.com/v1"
+
+# preset(预置音色) / clone(音色复刻) / design(文本设计音色)
+# 注意：唱歌只能用预置音色，与这里选什么无关，插件会自动切过去
 voice_mode = "clone"
+
 preset_voice = "mimo_default"
+# 唱歌使用的预置音色（clone/design 模型不支持唱歌，唱歌时自动用这个）
+singing_voice = "mimo_default"
+# design 模式的音色描述，例如：一位清冷慵懒的年轻女声，语速偏慢，气息松弛
+voice_design_prompt = ""
+
 voices_dir = "voices"
 default_voice = ""
 clone_voice = ""
+# 复刻音色不可用时是否回退到预置音色
+fallback_to_preset = true
+# 返回音频格式：wav(兼容性最好) / mp3(体积更小，若失败请改回 wav)
+audio_format = "wav"
+
+[style]
+# 默认情绪，留空表示不加情绪描述；可选：温柔/俏皮/慵懒/冷淡 ...
+default_emotion = ""
+# 默认语速：slow / normal / fast
+default_speed = "normal"
+# 追加到每次语音指令末尾，例如：像真人聊天，不要播音腔，允许自然的停顿和呼吸
+extra_instruction = ""
+
+[speech]
+max_chars = 180
+sing_max_chars = 400
+clean_text = true
+strip_narration = true
+auto_punctuate = true
+punctuation_limit = 30
+timeout = 120
+max_retries = 2
+inter_message_delay = 0.6
+# auto / record / voice / hybrid
+send_method = "auto"
