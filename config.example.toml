@@ -40,7 +40,7 @@ extra_instruction = ""
 
 [speech]
 max_chars = 180
-sing_max_chars = 400
+sing_max_chars = 80
 clean_text = true
 strip_narration = true
 auto_punctuate = true

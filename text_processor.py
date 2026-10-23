@@ -498,8 +498,8 @@ def prepare_speech(
         body = re.sub(r"[，,]{2,}", "，", body)
         body = _SING_PREFIX_RE.sub("", body)
         body = body.strip("，,、；; ")
-        if auto_punctuate:
-            body = _soft_break(body, punctuation_limit)
+        # 唱歌不补换气逗号：插进去会改变乐句结构，演唱时容易断错词、
+        # 把一句拆成两个乐句。歌词本身有标点，没有标点就交给模型按语义断。
         body = _ensure_terminal(body)
         if body:
             lead = ["唱歌"] + [t for t in style_tags if t.lower() not in {"唱歌", "sing", "singing"}]
