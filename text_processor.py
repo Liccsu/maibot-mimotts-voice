@@ -110,6 +110,12 @@ _SING_PREFIX_RE = re.compile(
     r"\s*"
 )
 
+# 开头的歌名元信息，如「《逆战》」「《逆战》- 张杰」。只认书名号且锚定开头，
+# 不做「歌手名」的猜测——猜错会吃掉真正的歌词首句，宁可多留两个字。
+_SING_META_RE = re.compile(
+    r"^[《【][^》】]{1,30}[》】](?:\s*[-—–]\s*[^，,。\n\s]{1,10})?[\s，,。:：、]*"
+)
+
 
 @dataclass
 class PreparedSpeech:
@@ -472,6 +478,13 @@ def prepare_speech(
 
     # 移除残留的唱歌标签（稍后统一放到最前面）
     body = _SING_TAG_RE.sub("", body)
+
+    if sing:
+        # 歌名元信息趁空格还在时剥掉（清洗会压掉空格，之后歌手名会和歌词粘连）
+        stripped = _SING_META_RE.sub("", body)
+        if stripped != body:
+            notes.append("已移除歌名/歌手元信息")
+        body = stripped
 
     if clean:
         body, clean_notes = clean_text(body, strip_narration=strip_narration)

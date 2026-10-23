@@ -530,12 +530,19 @@ class AIVoicePlugin(MaiBotPlugin):
         fmt = (self.config.voice.audio_format or "wav").lower()
         delay = max(0.0, float(self.config.speech.inter_message_delay or 0))
 
+        # 唱歌时把歌词全文打出来：词错能立刻分辨是 AI 写错了还是模型唱错了
+        if prepared.kind == "sing":
+            shown = prepared.text if len(prepared.text) <= 200 else prepared.text[:200] + "…"
+        else:
+            shown = prepared.text[:40] + ("…" if len(prepared.text) > 40 else "")
+
         self.ctx.logger.info(
-            "开始合成: kind=%s voice=%s chunks=%d total_chars=%d style=%r",
+            "开始合成: kind=%s voice=%s chunks=%d total_chars=%d text=%r style=%r",
             prepared.kind,
             plan.label,
             total,
             len(prepared.text),
+            shown,
             style,
         )
 
@@ -667,6 +674,16 @@ class AIVoicePlugin(MaiBotPlugin):
             "也不要写歌名说明；插在括号里的动作标签也一并去掉，只要干净的歌词。"
             "歌词用中文效果最好（官方明确建议），英文歌词的旋律稳定性会明显下降。"
             "注意：唱歌只能用预置音色，复刻音色无法唱歌。\n"
+            "【唱歌的铁律：不许编词】\n"
+            "- 用户消息里**粘贴了歌词**时，reply_text 必须**逐字照抄**那段歌词："
+            "不许改字、不许换词、不许减句、不许为了押韵加词。少一个词用户都能听出来。\n"
+            "- 用户**只给了歌名**（如「唱两句逆战」）时，只唱你**确有把握**的部分，最多 4~6 句。"
+            "记住多少唱多少，记不全就少唱，再用文字补一句「记不全词」，"
+            "**绝不允许**顺着韵脚自己往下编——编出来的词一听就是假的。\n"
+            "- 歌名、歌手名、专辑名、「以下是歌词」这类说明文字**不要**写进 reply_text，"
+            "它们会被原样唱出来。\n"
+            "- 唱的时候开头只要有（唱歌）就够了，不要叠（兴奋）（深情）等情绪标签，"
+            "情绪交给歌词本身，叠了只会越唱越用力。\n"
             "- `auto`：由插件根据文本里的（唱歌）标签自动判断。\n\n"
             "【emotion 情绪】从这些里选一个最贴合的：开心、兴奋、温柔、安慰、悲伤、委屈、愤怒、"
             "冷淡、严肃、俏皮、撒娇、慵懒、惊讶、无奈、害羞、深情。不确定就留空。\n\n"
