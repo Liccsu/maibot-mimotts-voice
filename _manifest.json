@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "id": "liccsu.maibot-mimotts-voice",
   "name": "MiMo TTS Voice Clone",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "MiMo TTS 语音插件 for MaiBot - 支持预置音色、音色复刻、文本设计音色，修复唱歌与语气/语速/情感控制（fork 维护版）",
   "author": {
     "name": "Liccsu",

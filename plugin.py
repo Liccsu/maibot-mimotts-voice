@@ -57,6 +57,8 @@ SPEED_PHRASES: dict[str, str] = {
     "fast": "语速偏快，像急着把话说完，但咬字依然清晰",
 }
 
+SING_STYLE_PREFIX = "用自然流畅的歌声演唱这段歌词，旋律连贯、节奏稳定、咬字清晰，不要像朗读。"
+
 # 唱歌专用：情绪落在「演唱表现」上，不能沿用说话那套「语气XX」
 # 且只在调用方显式指定情绪时才使用，不继承 style.default_emotion
 SING_EMOTION_PHRASES: dict[str, str] = {
@@ -84,6 +86,9 @@ SING_SPEED_PHRASES: dict[str, str] = {
     "normal": "",
     "fast": "节奏明快，但每个字都要唱清楚，不要含混",
 }
+
+# 唱歌未指定情绪时的默认基调：把控制权交回歌词
+SING_NEUTRAL_HINT = "情绪随歌词本身自然表达，不要刻意夸张或用力过猛"
 
 SEND_METHODS = ("auto", "record", "voice", "hybrid")
 VOICE_MODES = ("preset", "clone", "design")
@@ -148,7 +153,7 @@ class StyleSectionConfig(PluginConfigBase):
 class SpeechSectionConfig(PluginConfigBase):
     __ui_label__ = "合成与发送"
     max_chars: int = Field(default=180, description="单段朗读字数上限，超出会分段发送")
-    sing_max_chars: int = Field(default=80, description="单段演唱字数上限（过长会破坏旋律）")
+    sing_max_chars: int = Field(default=400, description="单段演唱字数上限（过长会破坏旋律）")
     clean_text: bool = Field(default=True, description="合成前清洗 Markdown/emoji/URL 等噪声")
     strip_narration: bool = Field(default=True, description="移除长括号旁白（舞台说明），避免被念出来")
     auto_punctuate: bool = Field(default=True, description="自动补标点与换气停顿，长句不再一口气读完")
@@ -383,47 +388,37 @@ class AIVoicePlugin(MaiBotPlugin):
     def _compose_style(self, base: str, emotion: str, speed: str, kind: str) -> str:
         cfg = self.config.style
         singing = kind == "sing"
-
-        if singing:
-            # 官方唱歌示例里**没有 user 消息**，只靠文本开头的 (唱歌) 标签。
-            # 这里默认什么都不发：多说一句"用歌声演唱、旋律连贯"，
-            # 模型就多一分把它当朗读处理的机会。只有显式指定了情绪/语速/风格
-            # 才补一句简短要求，其余交给标签和歌词本身。
-            extras: list[str] = []
-            if base.strip():
-                extras.append(base.strip())
-
-            emo_key = (emotion or "").strip()
-            if emo_key.lower() not in ("", "auto", "默认"):
-                extras.append(
-                    SING_EMOTION_PHRASES.get(emo_key, f"演唱情绪偏{emo_key}，但以歌词表达为主")
-                )
-
-            speed_key = (speed or "").strip().lower()
-            phrase = SING_SPEED_PHRASES.get(speed_key, "")
-            if phrase:
-                extras.append(phrase)
-
-            # extra_instruction 是给说话用的语气微调（如"不要播音腔"），
-            # 套到演唱上只会干扰，唱歌时忽略。
-            cleaned = [p.strip().rstrip("。.；;，, ") for p in extras if p and p.strip()]
-            return "。".join(cleaned) + "。" if cleaned else ""
-
         parts: list[str] = []
+
+        # 文档里 user 消息是可选参数，"可传入指令来调整语气与风格"，
+        # 唱歌靠 (唱歌) 标签生效，同时用一条 user 指令约束演唱方式是正当用法。
+        # 但*不要*把说话那套「语气XX」搬到演唱上——那是要朗读化。
+        if singing:
+            parts.append(SING_STYLE_PREFIX)
 
         if base.strip():
             parts.append(base.strip())
 
+        # 唱歌不继承全局默认情绪/语速。歌唱的情绪应由歌词决定，
+        # 只有调用方显式指定时才叠加，否则唱什么都一个味儿。
         emo_key = (emotion or "").strip()
         if emo_key.lower() in ("", "auto", "默认"):
-            emo_key = cfg.default_emotion.strip()
+            emo_key = "" if singing else cfg.default_emotion.strip()
+
         if emo_key:
-            parts.append(EMOTION_PHRASES.get(emo_key, f"语气{emo_key}"))
+            if singing:
+                parts.append(
+                    SING_EMOTION_PHRASES.get(emo_key, f"演唱情绪偏{emo_key}，但以歌词表达为主")
+                )
+            else:
+                parts.append(EMOTION_PHRASES.get(emo_key, f"语气{emo_key}"))
+        elif singing:
+            parts.append(SING_NEUTRAL_HINT)
 
         speed_key = (speed or "").strip().lower()
         if speed_key in ("", "auto", "默认"):
-            speed_key = cfg.default_speed.strip().lower()
-        phrase = SPEED_PHRASES.get(speed_key, "")
+            speed_key = "" if singing else cfg.default_speed.strip().lower()
+        phrase = (SING_SPEED_PHRASES if singing else SPEED_PHRASES).get(speed_key, "")
         if phrase:
             parts.append(phrase)
 
@@ -690,7 +685,7 @@ class AIVoicePlugin(MaiBotPlugin):
             "- 用户**只给了歌名**时，用你确实知道的歌词；记不准就**搜索确认**再写进 reply_text。"
             "**绝不允许**顺着韵脚自己编词填空——编出来的词一听就是假的。"
             "实在想不起的句子宁可跳过，也不要拿自创的词顶上。\n"
-            "- 一次别唱太长，**2~4 句**最稳。演唱段有长度上限，塞太长后段容易唱糊、听不清词。\n"
+            "- 用户没规定长度时，唱 2~4 句就够，别一口气塞整首。\n"
             "- 歌名、歌手名、专辑名、「以下是歌词」这类说明文字**不要**写进 reply_text，"
             "它们会被原样唱出来。\n"
             "- 唱的时候开头只要有（唱歌）就够了，不要叠（兴奋）（深情）等情绪标签，"
